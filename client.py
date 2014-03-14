@@ -1,7 +1,11 @@
 import sys
 import time
 import subprocess
-import dbus
+
+try:
+    import dbus
+except ImportError:
+    dbus = None
 
 from daemon import Daemon
 
@@ -28,16 +32,18 @@ class DPMSManager(Daemon):
         subprocess.call(['xset', 'dpms'])
         subprocess.call(['xset', 's', 'on'])
 
-        send_notification('Re-enabled')
+        if dbus:
+            send_notification('Re-enabled')
 
     def inhibit(self, time=None):
         subprocess.call(['xset', '-dpms'])
         subprocess.call(['xset', 's', 'off'])
 
-        if time:
-            send_notification('Disabled for %s minutes' % time)
-        else:
-            send_notification('Disabled')
+        if dbus:
+            if time:
+                send_notification('Disabled for %s minutes' % time)
+            else:
+                send_notification('Disabled')
 
     def status(self):
         dpm_status = subprocess.Popen('xset -q | grep -ce \'DPMS is Enabled\'', shell=True,
