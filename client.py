@@ -35,15 +35,20 @@ class DPMSManager(Daemon):
         if dbus:
             send_notification('Re-enabled')
 
-    def inhibit(self, time=None):
+    def inhibit(self, minutes=None):
         subprocess.call(['xset', '-dpms'])
         subprocess.call(['xset', 's', 'off'])
 
         if dbus:
-            if time:
+            if minutes:
                 send_notification('Disabled for %s minutes' % time)
+                self.timer(minutes)
             else:
                 send_notification('Disabled')
+
+    def timer(self, minutes):
+        time.sleep(minutes * 60)
+        self.enable()
 
     def status(self):
         dpm_status = subprocess.Popen('xset -q | grep -ce \'DPMS is Enabled\'', shell=True,
@@ -72,11 +77,11 @@ if __name__ == '__main__':
 
         elif arg == 'inhibit':
             if len(sys.argv) == 3:
-                time = sys.argv[2]
+                t = int(sys.argv[2])
 
             else:
-                time = None
-            daemon.inhibit(time)
+                t = None
+            daemon.inhibit(t)
 
         elif arg == 'enable':
             daemon.enable()
